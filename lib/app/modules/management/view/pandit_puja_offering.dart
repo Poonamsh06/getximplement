@@ -8,16 +8,13 @@ import 'package:management/app/modules/management/controller/pandit_controller.d
 import 'package:management/resources/app_exports.dart';
 import 'dart:html' as html;
 
-class PujaOffering extends StatefulWidget{
+class PujaOffering extends StatelessWidget{
   final AsyncSnapshot<DocumentSnapshot> asyncSnapshot;
- const PujaOffering({required this.asyncSnapshot});
+  PujaOffering({required this.asyncSnapshot});
 
-  @override
-  State<PujaOffering> createState() => _PujaOfferingState();
-}
 
-class _PujaOfferingState extends State<PujaOffering> {
-  String enableId = '';
+
+ var enableId = ''.obs;
   @override
   Widget build(BuildContext context) {
     return GetX<PanditServiesController>(
@@ -62,7 +59,7 @@ class _PujaOfferingState extends State<PujaOffering> {
     return StreamBuilder<QuerySnapshot>(
           stream: FirebaseFirestore.instance
               .collection(
-                  '/users_folder/folder/pandit_users/${widget.asyncSnapshot.data!['pandit_uid']}/pandit_ceremony_services')
+                  '/users_folder/folder/pandit_users/${asyncSnapshot.data!['pandit_uid']}/pandit_ceremony_services')
               .snapshots(),
           builder: (context, snapshot) {
             if (snapshot.data == null) {
@@ -170,7 +167,7 @@ class _PujaOfferingState extends State<PujaOffering> {
            SizedBox(
              width: 100,
              child: TextFormField(
-               enabled: docId==enableId?true:false,
+               enabled: docId==enableId.value?true:false,
                controller: newPrice,
                style: const TextStyle(fontSize: 12,),
                decoration:const InputDecoration(
@@ -182,7 +179,7 @@ class _PujaOfferingState extends State<PujaOffering> {
            SizedBox(
              width: 40,
              child: TextFormField(
-               enabled: docId==enableId?true:false,
+               enabled: docId==enableId.value?true:false,
                controller: newTime,
                style: const TextStyle(fontSize: 12,),
                decoration:const InputDecoration(
@@ -191,25 +188,26 @@ class _PujaOfferingState extends State<PujaOffering> {
                ),
            ),       
           const SizedBox(height:20),
-          TextButton(onPressed: ()async{          
-            if(enableId==docId){
-             await FirebaseFirestore.instance.doc('/users_folder/folder/pandit_users/${widget.asyncSnapshot.data!['pandit_uid']}/pandit_ceremony_services/$docId').update({
-                'puja_ceremony_price':double.parse(newPrice.text),
-                'puja_ceremony_time': newTime.text
-              }).whenComplete((){
-              setState(() {
-                enableId = '';
-              });
-               html.window.location.reload();
-              });
-             
-            }       
-             else{
-                setState(() {
-                enableId = docId;
-              });
-             }
-          }, child: Text(docId==enableId?"Save":"Edit", style: TextStyle(fontSize: 12,color: Get.isDarkMode?Colors.white:Colors.black87)))
+          Obx(()=>
+            TextButton(onPressed: ()async{          
+              if(enableId.value==docId){
+               await FirebaseFirestore.instance.doc('/users_folder/folder/pandit_users/${asyncSnapshot.data!['pandit_uid']}/pandit_ceremony_services/$docId').update({
+                  'puja_ceremony_price':double.parse(newPrice.text),
+                  'puja_ceremony_time': newTime.text
+                }).whenComplete((){
+                  enableId.value = '';
+                });
+                 html.window.location.reload();
+               
+               
+              }       
+               else{
+                 
+                  enableId.value = docId;
+               
+               }
+            }, child: Text(docId==enableId.value?"Save":"Edit", style: TextStyle(fontSize: 12,color: Get.isDarkMode?Colors.white:Colors.black87))),
+          )
         ],
       );
   }

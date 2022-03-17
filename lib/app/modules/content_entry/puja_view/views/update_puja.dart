@@ -214,7 +214,7 @@ class _UpdatePujaState extends State<UpdatePuja> {
                                 'puja_ceremony_standard_price': price.text,
                                 'puja_ceremony_standard_duration':
                                     duration.text,
-                                'puja_ceremony_type_filter':  controller.typeOfPuja!.value,
+                                'puja_ceremony_type_filter':  controller.typeOfPuja,
                                 'puja_ceremony_id': widget.pujaId,
                                 'puja_ceremony_promise': FieldValue.arrayUnion(
                                         promises),
@@ -233,7 +233,8 @@ class _UpdatePujaState extends State<UpdatePuja> {
                                     "quantity") {                                 
                                   itemsNeeded.add({
                                     'id': '${controller.foundPlayers.value[i]["id"]}',
-                                    'quantity' :'${controller.foundPlayers.value[i]["quantity"]}',                                   
+                                    'quantity' :'${controller.foundPlayers.value[i]["quantity"]}', 
+                                    'type' :  '${controller.foundPlayers.value[i]["type"]}',                                  
                                   });
                                 }
                               }                             
@@ -292,17 +293,45 @@ class _UpdatePujaState extends State<UpdatePuja> {
                                   });
                                 }),
                             trailing: SizedBox(
-                              width: 100,
-                              child: TextFormField(
-                                decoration: InputDecoration(
-                                    border: InputBorder.none,
-                                    hintText: controller
-                                        .foundPlayers.value[index]['quantity']),
-                                onChanged: (value) {
-                                  controller.foundPlayers.update((val) {
-                                    val![index]['quantity'] = value;
-                                  });
-                                },
+                              width: 300,
+                              child: Row(
+                                children: [
+                                  SizedBox(
+                                    width: 100,
+                                    child: TextFormField(
+                                      decoration: InputDecoration(
+                                          border: InputBorder.none,
+                                          hintText: controller
+                                              .foundPlayers.value[index]['quantity']),
+                                      onChanged: (value) {
+                                        controller.foundPlayers.update((val) {
+                                          val![index]['quantity'] = value;
+                                        });
+                                      },
+                                    ),
+                                  ),
+
+                                   SizedBox(
+                                       width: 200,
+                                       child: Obx(() => DropdownButton<String>(
+                                          items: <String>[
+                                            'deliver',
+                                            'non_deliver',                                                                              
+                                          ].map((String value) {
+                                            return DropdownMenuItem<String>(
+                                              value: value,
+                                              child: Text(value),
+                                            );
+                                          }).toList(),
+                                          hint: Text('${controller.foundPlayers.value[index]['type'] }'),
+                                          onChanged: (value) {
+                                            controller.foundPlayers.update((val) {
+                                            val![index]['type'] = value;
+                                          });
+                                          },
+                                        )),
+                                     ),
+                                ],
                               ),
                             ),
                             title: Text(
@@ -372,4 +401,3 @@ class _UpdatePujaState extends State<UpdatePuja> {
     );
   }
 }
-

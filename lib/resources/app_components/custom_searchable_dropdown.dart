@@ -125,7 +125,7 @@ Widget? prepareWidget(dynamic object,
 /// SearchChoices widget that allows the opening of a searchable dropdown.
 /// Use the [SearchChoices.single] factory if only one item needs to be selected.
 /// Use the [SearchChoices.multiple] factory if user must be able to select multiple items at once.
-class SearchChoices<T> extends StatefulWidget {
+class SearchChoices<T> extends StatelessWidget {
   /// [items] with __child__: [Widget] displayed ; __value__: any object with .toString() used to match search keyword.
   final List<DropdownMenuItem<T>> items;
 
@@ -576,9 +576,191 @@ class SearchChoices<T> extends StatefulWidget {
 
   @override
   _SearchChoicesState<T> createState() => _SearchChoicesState();
-}
 
-class _SearchChoicesState<T> extends State<SearchChoices<T>> {
+  Widget build(BuildContext context) {
+    final List<Widget> items =
+    _enabled ? List<Widget>.from(widget.items) : <Widget>[];
+    int? hintIndex;
+    if (widget.hint != null ||
+        (!_enabled &&
+            prepareWidget(widget.disabledHint, parameter: updateParent) !=
+                null)) {
+      final Widget? emplacedHint = _enabled
+          ? prepareWidget(widget.hint)
+          : DropdownMenuItem<Widget>(
+          child:
+          prepareWidget(widget.disabledHint, parameter: updateParent) ??
+              prepareWidget(widget.hint) ??
+              SizedBox.shrink());
+      hintIndex = items.length;
+      items.add(DefaultTextStyle(
+        style: _textStyle.copyWith(color: Theme.of(context).hintColor),
+        child: IgnorePointer(
+          child: emplacedHint,
+          ignoringSemantics: false,
+        ),
+      ));
+    }
+    Widget innerItemsWidget;
+    List<Widget> list = [];
+    selectedItems?.forEach((item) {
+      list.add(widget.selectedValueWidgetFn != null
+          ? widget.selectedValueWidgetFn!(widget.items[item].value)
+          : items[item]);
+    });
+    if (list.isEmpty && hintIndex != null) {
+      innerItemsWidget = items[hintIndex];
+    } else {
+      innerItemsWidget = widget.selectedAggregateWidgetFn != null
+          ? widget.selectedAggregateWidgetFn!(list)
+          : Column(
+        children: list,
+      );
+    }
+    final EdgeInsetsGeometry padding = ButtonTheme.of(context).alignedDropdown
+        ? _kAlignedButtonPadding
+        : _kUnalignedButtonPadding;
+    Widget? clickable = !_enabled &&
+        prepareWidget(widget.disabledHint, parameter: updateParent) != null
+        ? prepareWidget(widget.disabledHint, parameter: updateParent)
+        : InkWell(
+        key: Key(
+            "clickableResultPlaceHolder"), //this key is used for running automated tests
+        onTap: widget.readOnly || !_enabled
+            ? null
+            : () async {
+          await showDialogOrMenu("");
+        },
+        child: Row(
+          textDirection:
+          widget.rightToLeft ? TextDirection.rtl : TextDirection.ltr,
+          children: <Widget>[
+            widget.isExpanded
+                ? Expanded(child: innerItemsWidget)
+                : innerItemsWidget,
+            IconTheme(
+              data: IconThemeData(
+                color: _iconColor,
+                size: widget.iconSize,
+              ),
+              child:
+              prepareWidget(widget.icon, parameter: selectedResult) ??
+                  SizedBox.shrink(),
+            ),
+          ],
+        ));
+
+    Widget result = DefaultTextStyle(
+      style: _textStyle,
+      child: Container(
+        padding: padding.resolve(Directionality.of(context)),
+        child: Row(
+          textDirection:
+          widget.rightToLeft ? TextDirection.rtl : TextDirection.ltr,
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          mainAxisSize: MainAxisSize.min,
+          children: <Widget>[
+            widget.isExpanded
+                ? Expanded(child: clickable ?? SizedBox.shrink())
+                : clickable ?? SizedBox.shrink(),
+            !widget.displayClearIcon
+                ? SizedBox()
+                : InkWell(
+              onTap: hasSelection && _enabled && !widget.readOnly
+                  ? () {
+                clearSelection();
+              }
+                  : null,
+              child: Container(
+                padding: padding.resolve(Directionality.of(context)),
+                child: Row(
+                  textDirection: widget.rightToLeft
+                      ? TextDirection.rtl
+                      : TextDirection.ltr,
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  mainAxisSize: MainAxisSize.min,
+                  children: <Widget>[
+                    IconTheme(
+                      data: IconThemeData(
+                        color:
+                        hasSelection && _enabled && !widget.readOnly
+                            ? _enabledIconColor
+                            : _disabledIconColor,
+                        size: widget.iconSize,
+                      ),
+                      child: widget.clearIcon,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+
+    final double bottom = 8.0;
+    var validatorOutput;
+    if (widget.validator != null) {
+      validatorOutput = widget.validator!(selectedResult);
+    }
+    var labelOutput = prepareWidget(widget.label, parameter: selectedResult,
+        stringToWidgetFunction: (string) {
+          return (Text(string,
+              textDirection:
+              widget.rightToLeft ? TextDirection.rtl : TextDirection.ltr,
+              style: TextStyle(color: Colors.black54, fontSize: 16)));
+        });
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: <Widget>[
+        labelOutput ?? SizedBox.shrink(),
+        Stack(
+          children: <Widget>[
+            Padding(
+              padding: EdgeInsets.all(widget.padding),
+              child: result,
+            ),
+            widget.underline is NotGiven
+                ? SizedBox.shrink()
+                : Positioned(
+              left: 0.0,
+              right: 0.0,
+              bottom: bottom,
+              child: prepareWidget(widget.underline,
+                  parameter: selectedResult) ??
+                  Container(
+                    height: 1.0,
+                    decoration: BoxDecoration(
+                        border: Border(
+                            bottom: BorderSide(
+                                color: valid
+                                    ? Color(0xFFBDBDBD)
+                                    : Colors.red,
+                                width: 0.0))),
+                  ),
+            ),
+          ],
+        ),
+        valid
+            ? SizedBox.shrink()
+            : validatorOutput is String
+            ? Text(
+          validatorOutput,
+          textDirection: widget.rightToLeft
+              ? TextDirection.rtl
+              : TextDirection.ltr,
+          style: TextStyle(color: Colors.red, fontSize: 13),
+        )
+            : validatorOutput,
+        displayMenu.value ? menuWidget() : SizedBox.shrink(),
+      ],
+    );
+  }
+    // TODO: implement build
+    throw UnimplementedError();
+  }
+
   List<int>? selectedItems;
   PointerThisPlease<bool> displayMenu = PointerThisPlease<bool>(false);
   Function? updateParent;
@@ -1285,7 +1467,7 @@ class _DropdownDialogState<T> extends State<DropdownDialog> {
             autofocus: widget.autofocus,
             onChanged: (value) {
               _updateShownIndexes(value);
-              setState(() {});
+            //  setState(() {});
             },
             keyboardType: widget.keyboardType,
           ),

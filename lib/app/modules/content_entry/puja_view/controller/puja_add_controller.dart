@@ -6,6 +6,16 @@ import '../../../../../resources/app_exports.dart';
 class HomeController extends GetxController {
 
 
+  //text editing controllers
+   var  pujaId;
+  late final TextEditingController Keyword ;
+  late final TextEditingController Price;
+  late final TextEditingController Duration;
+  late final List<dynamic> updateName;
+  late final List<dynamic> updateDescription;
+  late final List<dynamic> updateBenefit;
+
+
   final List<Map<String, dynamic>> states = [
     {"code": "AN", "name": "Andaman and Nicobar Islands"},
     {"code": "AP", "name": "Andhra Pradesh"},

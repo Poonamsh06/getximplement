@@ -10,21 +10,18 @@ import '../../../../../resources/app_exports.dart';
 import '../../../../../resources/responshive.dart';
 import '../controller/puja_add_controller.dart';
 
-class AddNewPuja extends StatefulWidget {
-  final AsyncSnapshot<DocumentSnapshot>? fields;
-  final bool? edit;
-  const AddNewPuja({Key? key, this.fields, this.edit}) : super(key: key);
-  @override
-  State<AddNewPuja> createState() => _AddNewPujaState();
-}
-
 String pujaId =
     "PJID${DateTime.now().year}${DateTime.now().month}${DateTime.now().day}${DateTime.now().hour}${DateTime.now().minute}${DateTime.now().second}";
 
-class _AddNewPujaState extends State<AddNewPuja> {
-  String image =
-      'https://www.kindpng.com/picc/m/78-785827_user-profile-avatar-login-account-male-user-icon.png';
+class AddNewPuja extends StatelessWidget {
+  
+  final AsyncSnapshot<DocumentSnapshot>? fields;
+  final bool? edit;
+  RxString image =
+      'https://www.kindpng.com/picc/m/78-785827_user-profile-avatar-login-account-male-user-icon.png'.obs;
   HomeController controller = Get.put(HomeController());
+
+  AddNewPuja({Key? key, this.fields, this.edit}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -54,7 +51,7 @@ class _AddNewPujaState extends State<AddNewPuja> {
 
     return Padding(
       padding: ResponsiveWidget.isSmallScreen(context)
-          ? EdgeInsets.all(0)
+          ? const EdgeInsets.all(0)
           : EdgeInsets.only(left: Get.width * 0.15, right: Get.width * 0.07),
       child: Row(
         children: [
@@ -65,62 +62,63 @@ class _AddNewPujaState extends State<AddNewPuja> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.start,
                 children: [
-                  Container(
-                    alignment: Alignment.topRight,
-                    height: 100,
-                    width: 100,
-                    decoration: BoxDecoration(
-                      image: DecorationImage(image: NetworkImage(image)),
-                    ),
-                    child: TextButton(
-                        onPressed: () {
-                          showDialog(
-                              context: context,
-                              builder: (context) => AlertDialog(
-                                    title: const Text("Alert"),
-                                    content: const Text(
-                                        "Are you sure that you want to update this picture?"),
-                                    actions: [
-                                      TextButton(
-                                          onPressed: () {
-                                            Navigator.of(context).pop();
-                                          },
-                                          child: Text("Cancel")),
-                                      TextButton(
-                                          onPressed: () {
-                                            FileUploadInputElement input =
-                                                FileUploadInputElement()
-                                                  ..accept = 'image/*';
-                                            FirebaseStorage fs =
-                                                FirebaseStorage.instance;
-                                            input.click();
-                                            input.onChange.listen((event) {
-                                              final file = input.files!.first;
-                                              final reader = FileReader();
-                                              reader.readAsDataUrl(file);
-                                              reader.onLoadEnd
-                                                  .listen((event) async {
-                                                var snapshot = await fs
-                                                    .ref(
-                                                        'assets_folder/puja_ceremony_folder')
-                                                    .child('$pujaId')
-                                                    .putBlob(file);
-                                                String downloadUrl =
+                  Obx(()=>
+                   Container(
+                      alignment: Alignment.topRight,
+                      height: 100,
+                      width: 100,
+                      decoration: BoxDecoration(
+                        image: DecorationImage(image: NetworkImage(image.value)),
+                      ),
+                      child: TextButton(
+                          onPressed: () {
+                            showDialog(
+                                context: context,
+                                builder: (context) => AlertDialog(
+                                      title: const Text("Alert"),
+                                      content: const Text(
+                                          "Are you sure that you want to update this picture?"),
+                                      actions: [
+                                        TextButton(
+                                            onPressed: () {
+                                              Navigator.of(context).pop();
+                                            },
+                                            child: const Text("Cancel")),
+                                        TextButton(
+                                            onPressed: () {
+                                              FileUploadInputElement input =
+                                                  FileUploadInputElement()
+                                                    ..accept = 'image/*';
+                                              FirebaseStorage fs =
+                                                  FirebaseStorage.instance;
+                                              input.click();
+                                              input.onChange.listen((event) {
+                                                final file = input.files!.first;
+                                                final reader = FileReader();
+                                                reader.readAsDataUrl(file);
+                                                reader.onLoadEnd
+                                                    .listen((event) async {
+                                                  var snapshot = await fs
+                                                      .ref(
+                                                          'assets_folder/puja_ceremony_folder')
+                                                      .child('$pujaId')
+                                                      .putBlob(file);
+                                                 
+                                                            String downloadUrl =
                                                     await snapshot.ref
                                                         .getDownloadURL();
-                                                setState(() {
-                                                  image = downloadUrl;
-                                                  //widget.onPressed(downloadUrl);
+                                                  image.value = downloadUrl;
+                                               
                                                 });
                                               });
-                                            });
-                                            Navigator.of(context).pop();
-                                          },
-                                          child: Text("Continue")),
-                                    ],
-                                  ));
-                        },
-                        child: Text("Edit")),
+                                              Navigator.of(context).pop();
+                                            },
+                                            child: Text("Continue")),
+                                      ],
+                                    ));
+                          },
+                          child: Text("Edit")),
+                    ),
                   ),
                   ExpandablePanel(
                       header: redButton("Add Name"),
@@ -373,7 +371,7 @@ class _AddNewPujaState extends State<AddNewPuja> {
             hintText: hintText,
 
             //make hint text
-            hintStyle: TextStyle(
+            hintStyle:  TextStyle(
               color: Colors.grey,
               fontSize: 16,
               fontFamily: "verdana_regular",
@@ -392,5 +390,5 @@ class _AddNewPujaState extends State<AddNewPuja> {
           )),
     );
   }
-}
 
+}

@@ -4,12 +4,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:management/resources/app_exports.dart';
 
-class SamagriAddDelete extends StatefulWidget {
-  @override
-  State<SamagriAddDelete> createState() => _SamagriAddDeleteState();
-}
-  
-class _SamagriAddDeleteState extends State<SamagriAddDelete> {
+class SamagriAddDelete extends StatelessWidget {
+ 
 
   @override
   Widget build(BuildContext context) {
